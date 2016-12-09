@@ -106,34 +106,38 @@
    ( filter ( lambda (x) ( not ( member x p )))
             ( vizinhos a G )))
 
-
+; recursive: Lista-Numeros Lista-Lista-num Lista-Num Lista-Lista-num
+; Dado o nodo inicial, começará a visitar todos os outros nodos que estão conectados a ele, o "graphaux" é utilizada caso
+; o grafo seja desconexo, assim quando ele terminar de verificar todos os possíveis do conexo, vai utilizar o auxliar para visitar o resto
 (define (recursive nodo graph visitados graphaux)
   (cond
-    [(empty? graph)empty]
-    [(tdsvisitados graph visitados)visitados]
+    [(empty? graph)empty] ; se o graph que recebeu é empty, devolve empty
+    [(tdsvisitados graph visitados)visitados] ; se já visitou todos, devolve visitados
+    ; verifica se o nodo já foi visitado, caso não visita ele E seus vizinhos
     [(not(jatem?2 (first nodo) visitados)) (recursive nodo graph (visitavizinhos nodo graph (append visitados (list(first nodo))))graphaux)]
+    ; Se o nodo já foi visitado, vai diminuir o "graphaux" em um, e utilizar o primeiro dele como nodo
     [else (recursive (first graphaux) graph visitados (rest graphaux))]))
 
-
+; tdsvisitados: Lista-Lista-num Lista-num
+; Vai receber um Grafo e uma Lista-num, verifica se todos os nodos do grafo já foram visitados
 (define (tdsvisitados graph visitados)
   (cond
     [(empty? graph)#true]
     [(jatem?2 (first(first graph))visitados)(tdsvisitados (rest graph)visitados)]
     [else #false])) 
 
-(define (imag vizinhos graph visitados)
-  (cond
-    [(empty? vizinhos)visitados]
-    [(not(jatem?2 (first vizinhos) visitados))(imag (rest vizinhos) graph (append(visitavizinhos (devolveNodo (first vizinhos) graph) graph visitados)(list (first vizinhos))))]
-    [else (imag (rest vizinhos) graph (visitavizinhos (devolveNodo (first vizinhos) graph) graph visitados))]))
-
+; visitazinhos: Lista-Num Lista-Lista-Num Lista-Num
+; Recebe um Nodo, Grafo e os Visitados, se o primeiro vizinho não estiver
+; vou visitar os vizinhos dele(excluindo ele desses vizinhos) e atualizando visitados
 (define (visitavizinhos nodo graph visitados)
   (cond
     [(empty? (rest nodo))visitados]
     [(not(jatem?2 (first(rest nodo)) visitados))(visitavizinhos (arrumavizi (first(rest nodo)) (rest nodo) (first nodo))graph (append visitados (list(first(rest nodo)))))]
     [else (visitavizinhos (cons (first nodo)(rest(rest nodo))) graph visitados)]))
 
-
+; arrumavizi: Num Lista-Num Num
+; Dado o Número a ser retirado, os Vizinhos e o Principal (1 2 3) 1 é o principal
+; Remove o Número dos vizinhos e devolve o Nodo sem ele (colocando o principal como primeiro)
 (define (arrumavizi num vizinhos principal)
   (cond
     [(not(jatem?2 num vizinhos))(cons principal vizinhos)]
@@ -145,21 +149,14 @@
 
 ;###############################################################;###############################################################
 
-; final: Grafo -> Lista-de-Lista-de-Numeros
-; Recebe um Grafo e devolve seus componentes
-;(check-expect (final graforiginal)(list (list 0) (list 1 4 3) (list 5 2)))
+; final: Grafo -> Trabalho
+; Recebe um Grafo e se houver componentes com tamanho maior que 2 retorna somente eles
+; Se não, retorna os componentes e o ordenamento
 (define (final graf)
   (cond
   [(tam2 (separa-final (separando-componentes graf graf)))(haciclo graf)] ;; Se tiver um ciclo devolve os componentes separados
   [else (naohaciclo graf)]))
 
-   
-; Dado dois grafos os junta: Grafo Grafo -> Grafo
-(define (juntagraph graf)
-  (cond
-    [(empty? graf)empty]
-    [else (append (organizagraf (conexosgraf graf graf)(conexosgraf graf graf))
-                  (organizagraf (desconexos graf graf)(desconexos graf graf)))]))
 
 ;###############################################################;###############################################################
 ; separa-final: Lista-de-Lista-de-numeros -> lista-de-numeros
@@ -195,64 +192,12 @@
     [(= num(first(first lista)))#t]
     [else (jatem? num (rest lista))]))
 
-(define (any num graf grafori)
-  (cond 
-    [(empty? graf)#f]
-    [(not(conectados-larg? num (first(first graf))(grafate grafori(first(first graf))grafori)))(first graf)]
-    [else (any num (rest graf)grafori)]))
-
-; Dado um numero de inicio e 2 grafos, retorna se existe algum elemento nesse grafo que não está ligado a esse numero
-(define (any2 num graf grafori)
-  (cond 
-    [(empty? graf)#f]
-    [(not(conectados-larg? num (first(first graf))(grafate grafori(first(first graf))grafori)))#t]
-    [else (any2 num (rest graf)grafori)]))
-
-; Dado um grafo o devolve organizado
-(define (organizagraf grafori graf2)
-  (cond 
-    [(empty? graf2)grafori]
-    [(any2 (first(first grafori))grafori grafori)(organizagraf (botaultimo (any (first(first grafori))grafori grafori)grafori grafori)(botaultimo (any (first(first grafori))grafori grafori)grafori grafori))]
-    [else grafori]))
- 
-; Dado uma lista de números e um grafo, retorna somente um grafo com  esses números como nodo 
-(define (montagraf listanum graf)
-  (cond
-    [(empty? listanum)empty]
-    [else (cons (devolveNodo (first listanum) graf)(montagraf (rest listanum) graf))]))
-
-
 ; Dado um número e um grafo, retorna o nodo desse número
 (define (devolveNodo number graf)
   (cond
     [(empty? graf)0]
     [(= number(first(first graf)))(first graf)] 
     [else (devolveNodo number (rest graf))])) 
-
-; Dado 2 grafos e 1 numero, retorna o grafico até esse nodo
-(define (grafate graf number graf2)
-  (cond
-    [(empty? graf2)empty]
-    [(=(first(first graf2))number)(cons(devolveNodo(first(first graf2))graf)(grafate graf number empty))]
-    [else (cons(devolveNodo(first(first graf2))graf)(grafate graf number (rest graf2)))]))
-
-; Dado um Nodo e um Grafo coloca esse Nodo em ultimo lugar
-(define (botaultimo nodo graf graf2)
-  (cond
-    [(empty? graf2)(cons nodo empty)]
-    [(= (first nodo)(first(first graf2)))(botaultimo nodo graf (rest graf2))]
-    [(conexo? graf (first graf2))(cons (first graf2)(botaultimo nodo graf (rest graf2)))]
-    [else (cons (first graf2)(rest graf2))]))
-
-; Dado um grafo retorna uma lista de numero
-(define (ldn? graf)
-  (cond
-    [(empty? graf)empty] 
-    [else (cons(first(first graf))(ldn? (rest graf)))]))
-
-; Dado um nodo, um grafo e uma ldn retorna se ele é alcançável
-(define (conexo? graf nodo)
-    (conectados-larg? (first(first graf))(first nodo)graf))
 
 ; Recebe um numero e uma lista de numeros e retorna se esta na lista
 (define (jatem?2 num lista)
@@ -261,27 +206,6 @@
     [(= num(first lista))#t]
     [else (jatem?2 num (rest lista))]))
 
-; Recebe uma lista e remove os repetidos
-(define (remrep ldn)
-  (cond
-    [(empty? ldn)empty]
-    [(jatem?2 (first ldn) (rest ldn))(remrep (rest ldn))]
-    [else (cons (first ldn)(remrep (rest ldn)))]))
-
-; Dado dois grafos iguais, devolve o grafo desconexo
-(define (desconexos graf graf2)
-  (cond
-    [(empty? graf2)empty]
-    [(not(conexo? graf (first graf2)))(cons (first graf2)(desconexos graf (rest graf2)))]
-    [else (desconexos graf (rest graf2))]))
-
-; Dado 2 grafos devolve o grafo CONEXO
-(define (conexosgraf graf graf2)
-  (cond
-    [(empty? graf2)empty]
-    [(conexo? graf (first graf2))(cons (first graf2)(conexosgraf graf(rest graf2)))]
-    [else (conexosgraf graf(rest graf2))]))
-
 ; Dado uma lista verifica se tem tamanho maior que 2
 (define (tam2 lista)
   (cond
@@ -289,6 +213,7 @@
     [(empty? (rest(first lista)))(tam2 (rest lista))]
     [else #t]))
 
+; Função para printar caso haja Ciclos nos componentes
 (define (haciclo graf)
   (begin
     (printf "Não há ordenamento topológico\n")
@@ -296,6 +221,7 @@
     (display (separa-final(separando-componentes graf graf)))
     (printf "\n")))
 
+; Função para printar caso não haja Ciclos nos componentes
 (define (naohaciclo graf)
   (begin
     (printf "Ordenamento topológico: ")
