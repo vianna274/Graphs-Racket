@@ -3,9 +3,11 @@
 #reader(lib "htdp-advanced-reader.ss" "lang")((modname TrabalhoGrafos-LeonardoVianna-AlineWeber-GabrielStepien) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ;; IMPORTANTE: para ter acesso a leitura de arquivos
 ;; é necessário configurar o DrRacket para a linguagem
-;; "Advanced Student" // SÓ CONSEGUI UTILZANDO "THE RACKET LANGUAGE"
+;; "Advanced Student" 
 
-;;******************** COMO USAR: UTILIZAR A FUNÇÃO "(final graf)" apenas chamando na execução (final (e o grafo com a estrutura idêntica ao enunciado))
+;--------------------------------------------------------------------------------------------------------------
+;                                  LEITURA DO ARQUIVO "grafo.txt"                                             ;
+;--------------------------------------------------------------------------------------------------------------
 
 ;; Nome do arquivo a ser lido
 (define src "grafo.txt")
@@ -35,6 +37,11 @@
 ;   (list a1 a2 ... an)
 ; onde todo símbolo referenciado nas adjacências a1 ... an
 ; ocorre como primeiro elemento em uma única adjacência ak
+
+;--------------------------------------------------------------------------------------------------------------
+;                                        CONSTANTES DE TESTE                                                  ;
+;--------------------------------------------------------------------------------------------------------------
+
 (define graf(list
    (list 0 1)
   ( list 1 4)
@@ -50,6 +57,10 @@
   ( list 3 1)
   ( list 5 2)
   ( list 2 5)))
+
+;--------------------------------------------------------------------------------------------------------------
+;                                          FUNÇÕES DO MOODLE                                                  ;
+;--------------------------------------------------------------------------------------------------------------
 
 ; vizinhos : símbolo, grafo -> lista-de-símbolos
 ; ( vizinhos n G) retorna todos os nodos no grafo G
@@ -106,6 +117,86 @@
    ( filter ( lambda (x) ( not ( member x p )))
             ( vizinhos a G )))
 
+;--------------------------------------------------------------------------------------------------------------
+;                               FUNÇÃO QUE DECIDE QUAL PRINT CHAMAR                                           ;
+;--------------------------------------------------------------------------------------------------------------
+
+; final: Grafo -> Trabalho
+; Recebe um Grafo e se houver componentes com tamanho maior que 2 retorna somente eles
+; Se não, retorna os componentes e o ordenamento
+(define (final graf)
+  (cond
+  [(tam2 (separa-final (separando-componentes graf graf)))(haciclo graf)] ;; Se tiver um ciclo devolve os componentes separados
+  [else (naohaciclo graf)]))
+
+
+;--------------------------------------------------------------------------------------------------------------
+;                                   FUNÇÕES PARA SEPARAR COMPONENTE                                           ;
+;--------------------------------------------------------------------------------------------------------------
+
+; separa-final: Lista-de-Lista-de-numeros -> lista-de-numeros
+; recebe uma "Lista de Lista-de-Numeros" e retorna ela retirando os repetidos
+(define(separa-final g)
+  (cond
+    [(empty? g)empty]
+    [(jatem? (first(first g))(rest g))(separa-final (rest g))]
+    [else (cons (first g)(separa-final (rest g)))]))
+
+; separando-componentes: graf -> lista de lista-de-numeros
+; recebe um grafo e separa todos os componentes dele (inclusive repetidos)
+(define (separando-componentes graf grafori)
+  (cond
+    [(empty? graf)empty]
+    [else (cons (separa(first(first graf))grafori grafori)(separando-componentes (rest graf) grafori))]))
+
+; separa: Numero Grafo Grafo -> Lista-de-Numeros
+; Recebe um numero e 2 Grafos, um vai ser modificado durante o programa, o outro vai se manter original para testar a conexão.
+(define (separa num1 graf grafori)
+  (cond
+    [(empty? graf)empty] 
+    [(and(conectados-larg? num1 (first(first graf))grafori)
+         (conectados-larg? (first(first graf))num1 grafori))
+     (cons (first(first graf))(separa num1 (rest graf) grafori))]
+    [else (separa num1 (rest graf) grafori)]))
+
+
+;--------------------------------------------------------------------------------------------------------------
+;                                   FUNÇÕES AUXILIARES PARA AMBAS PARTES                                       ;
+;--------------------------------------------------------------------------------------------------------------
+
+; jatem?: Numero Lista-de-Lista-de-Numeros -> Boolean
+; Recebe um Número e uma "Lista de Lista-de-Numeros" e retorna se esse valor está nessa lista
+(define (jatem? num lista)
+  (cond
+    [(empty? lista)#f]
+    [(= num(first(first lista)))#t]
+    [else (jatem? num (rest lista))]))
+
+; Dado um número e um grafo, retorna o nodo desse número
+(define (devolveNodo number graf)
+  (cond
+    [(empty? graf)0]
+    [(= number(first(first graf)))(first graf)] 
+    [else (devolveNodo number (rest graf))])) 
+
+; Recebe um numero e uma lista de numeros e retorna se esta na lista
+(define (jatem?2 num lista)
+  (cond
+    [(empty? lista)#f]
+    [(= num(first lista))#t]
+    [else (jatem?2 num (rest lista))]))
+
+; Dado uma lista verifica se tem tamanho maior que 2
+(define (tam2 lista)
+  (cond
+    [(empty? lista)#f]
+    [(empty? (rest(first lista)))(tam2 (rest lista))]
+    [else #t]))
+
+;--------------------------------------------------------------------------------------------------------------
+;                                  FUNÇÕES PARA ORDEM TOPOLÓGICA                                              ;
+;--------------------------------------------------------------------------------------------------------------
+
 ; recursive: Lista-Numeros Lista-Lista-num Lista-Num Lista-Lista-num
 ; Dado o nodo inicial, começará a visitar todos os outros nodos que estão conectados a ele, o "graphaux" é utilizada caso
 ; o grafo seja desconexo, assim quando ele terminar de verificar todos os possíveis do conexo, vai utilizar o auxliar para visitar o resto
@@ -145,73 +236,10 @@
     [(empty? (rest vizinhos))(cons principal vizinhos)]
     [(= num (first vizinhos))(cons principal (rest vizinhos))]
     [else (arrumavizi num (append (rest vizinhos)(list(first vizinhos)))principal)]))
-; @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-;###############################################################;###############################################################
-
-; final: Grafo -> Trabalho
-; Recebe um Grafo e se houver componentes com tamanho maior que 2 retorna somente eles
-; Se não, retorna os componentes e o ordenamento
-(define (final graf)
-  (cond
-  [(tam2 (separa-final (separando-componentes graf graf)))(haciclo graf)] ;; Se tiver um ciclo devolve os componentes separados
-  [else (naohaciclo graf)]))
-
-
-;###############################################################;###############################################################
-; separa-final: Lista-de-Lista-de-numeros -> lista-de-numeros
-; recebe uma "Lista de Lista-de-Numeros" e retorna ela retirando os repetidos
-(define(separa-final g)
-  (cond
-    [(empty? g)empty]
-    [(jatem? (first(first g))(rest g))(separa-final (rest g))]
-    [else (cons (first g)(separa-final (rest g)))]))
-
-; separando-componentes: graf -> lista de lista-de-numeros
-; recebe um grafo e separa todos os componentes dele (inclusive repetidos)
-(define (separando-componentes graf grafori)
-  (cond
-    [(empty? graf)empty]
-    [else (cons (separa(first(first graf))grafori grafori)(separando-componentes (rest graf) grafori))]))
-
-; separa: Numero Grafo Grafo -> Lista-de-Numeros
-; Recebe um numero e 2 Grafos, um vai ser modificado durante o programa, o outro vai se manter original para testar a conexão.
-(define (separa num1 graf grafori)
-  (cond
-    [(empty? graf)empty] 
-    [(and(conectados-larg? num1 (first(first graf))grafori)
-         (conectados-larg? (first(first graf))num1 grafori))
-     (cons (first(first graf))(separa num1 (rest graf) grafori))]
-    [else (separa num1 (rest graf) grafori)]))
-
-; jatem?: Numero Lista-de-Lista-de-Numeros -> Boolean
-; Recebe um Número e uma "Lista de Lista-de-Numeros" e retorna se esse valor está nessa lista
-(define (jatem? num lista)
-  (cond
-    [(empty? lista)#f]
-    [(= num(first(first lista)))#t]
-    [else (jatem? num (rest lista))]))
-
-; Dado um número e um grafo, retorna o nodo desse número
-(define (devolveNodo number graf)
-  (cond
-    [(empty? graf)0]
-    [(= number(first(first graf)))(first graf)] 
-    [else (devolveNodo number (rest graf))])) 
-
-; Recebe um numero e uma lista de numeros e retorna se esta na lista
-(define (jatem?2 num lista)
-  (cond
-    [(empty? lista)#f]
-    [(= num(first lista))#t]
-    [else (jatem?2 num (rest lista))]))
-
-; Dado uma lista verifica se tem tamanho maior que 2
-(define (tam2 lista)
-  (cond
-    [(empty? lista)#f]
-    [(empty? (rest(first lista)))(tam2 (rest lista))]
-    [else #t]))
+;--------------------------------------------------------------------------------------------------------------
+;                                   PRINTS DO FINAL DO TRABALHO                                               ;
+;--------------------------------------------------------------------------------------------------------------
 
 ; Função para printar caso haja Ciclos nos componentes
 (define (haciclo graf)
