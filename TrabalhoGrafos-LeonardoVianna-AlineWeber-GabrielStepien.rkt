@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname TrabalhoGrafos-LeonardoVianna-AlineWeber-GabrielStepien) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname TrabalhoGrafos-LeonardoVianna-AlineWeber-GabrielStepien-2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ;; IMPORTANTE: para ter acesso a leitura de arquivos
 ;; é necessário configurar o DrRacket para a linguagem
 ;; "Advanced Student" 
@@ -21,8 +21,6 @@
 (define n (first r))
 (define g (rest r))
 
-
-
 ;; DEFINIÇÃO DE DADOS PARA O GRAFO
 
 ; Uma adjacência é uma lista
@@ -38,25 +36,7 @@
 ; onde todo símbolo referenciado nas adjacências a1 ... an
 ; ocorre como primeiro elemento em uma única adjacência ak
 
-;--------------------------------------------------------------------------------------------------------------
-;                                        CONSTANTES DE TESTE                                                  ;
-;--------------------------------------------------------------------------------------------------------------
 
-(define graf(list
-   (list 0 1)
-  ( list 1 4)
-  ( list 4 3 5)
-  ( list 3 1)
-  ( list 5 2)
-  ( list 2 5)))
-
-(define graforiginal(list 6
-   (list 0 1)
-  ( list 1 4)
-  ( list 4 3 5)
-  ( list 3 1)
-  ( list 5 2)
-  ( list 2 5)))
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                          FUNÇÕES DO MOODLE                                                  ;
@@ -96,167 +76,141 @@
                               ( vizinhos ( first la) G))
                       ( todos-vizinhos ( rest la) p G ))]))
 
-
-
-; conectados-prof? : símbolo símbolo grafo -> boolean
-( define ( conectados-prof? a b G)
-   ( busca-prof ( list a) ( list ) b G))
-; busca-prof : lista-simb, simb, lista-simb, grafo -> bool
-( define ( busca-prof la p b G)
-   ( cond
-      ; não há nodos na lista
-      [( empty? la) false ]
-      ; o primeiro nodo é o destino?
-      [( equal? ( first la) b) true ]
-      ; busca em profundidade a partir do primeiro nodo .
-      [ else ( busca-prof
-               ( append ( novos-vizinhos ( first la) p G) ( rest la ))
-               ( cons ( first la) p) b G )]))
-; novos-vizinhos : simb, lista-simb, grafo -> lista-simb
-( define ( novos-vizinhos a p G)
-   ( filter ( lambda (x) ( not ( member x p )))
-            ( vizinhos a G )))
-
 ;--------------------------------------------------------------------------------------------------------------
 ;                               FUNÇÃO QUE DECIDE QUAL PRINT CHAMAR                                           ;
 ;--------------------------------------------------------------------------------------------------------------
 
 ; final: Grafo -> Trabalho
-; Recebe um Grafo e se houver componentes com tamanho maior que 2 retorna somente eles
+; Recebe um grafo e se houver componentes com tamanho maior igual que 2 retorna somente eles
 ; Se não, retorna os componentes e o ordenamento
-(define (final graf)
+(define (final grafo)
   (cond
-  [(tam2 (separa-final (separando-componentes graf graf)))(haciclo graf)] ;; Se tiver um ciclo devolve os componentes separados
-  [else (naohaciclo graf)]))
-
+    [( tamanho-maior-igual-que-2 (separa-final (separando-componentes grafo grafo))) (ha-ciclo grafo)] ;; Se tiver um ciclo devolve os componentes separados
+    [else (nao-ha-ciclo grafo)]))
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                   FUNÇÕES PARA SEPARAR COMPONENTE                                           ;
 ;--------------------------------------------------------------------------------------------------------------
 
-; separa-final: Lista-de-Lista-de-numeros -> lista-de-numeros
-; recebe uma "Lista de Lista-de-Numeros" e retorna ela retirando os repetidos
-(define(separa-final g)
+; separa-final: Lista-de-Lista-de-numeros -> Lista-de-numeros
+; Recebe a lista de componentes, com componentes repetidos, e retorna ela retirando os repetidos
+(define (separa-final componentes)
   (cond
-    [(empty? g)empty]
-    [(jatem? (first(first g))(rest g))(separa-final (rest g))]
-    [else (cons (first g)(separa-final (rest g)))]))
+    [(empty? componentes) empty]
+    [(ja-tem? (first (first componentes)) (rest componentes)) (separa-final (rest componentes))] ;Se um nodo está em outro componente, ignora o atual componente
+    [else (cons (first componentes) (separa-final (rest componentes)))])) ;Caso contrário, inclui este componente e segue o filtro
 
-; separando-componentes: graf -> lista de lista-de-numeros
-; recebe um grafo e separa todos os componentes dele (inclusive repetidos)
-(define (separando-componentes graf grafori)
+; separando-componentes: Grafo Grafo -> Lista-de-lista-de-numeros
+; Recebe um grafo e separa todos os componentes dele (inclusive repetidos)
+(define (separando-componentes grafo grafo-aux)
   (cond
-    [(empty? graf)empty]
-    [else (cons (separa(first(first graf))grafori grafori)(separando-componentes (rest graf) grafori))]))
+    [(empty? grafo) empty]
+    [else (cons
+           (separa (first (first grafo)) grafo-aux grafo-aux) ; Componente do primeiro nodo
+           (separando-componentes (rest grafo) grafo-aux))])) ; Resto dos componentes
 
 ; separa: Numero Grafo Grafo -> Lista-de-Numeros
-; Recebe um numero e 2 Grafos, um vai ser modificado durante o programa, o outro vai se manter original para testar a conexão.
-(define (separa num1 graf grafori)
+; Recebe o mesmo grafo duas vezes pois um vai ser modificado durante o programa, para a recursão, e o outro vai se manter original para testar a conexão.
+; Busca todos os nodos no grafo que fazem parte do mesmo componenete que o número passado por parâmetro
+(define (separa n grafo grafo-aux)
   (cond
-    [(empty? graf)empty] 
-    [(and(conectados-larg? num1 (first(first graf))grafori)
-         (conectados-larg? (first(first graf))num1 grafori))
-     (cons (first(first graf))(separa num1 (rest graf) grafori))]
-    [else (separa num1 (rest graf) grafori)]))
-
+    [(empty? grafo) empty] 
+    [(and (conectados-larg? n (first (first grafo)) grafo-aux)
+          (conectados-larg? (first (first grafo)) n grafo-aux)) 
+     (cons (first (first grafo))(separa n (rest grafo) grafo-aux))] ; Caso os dois nodos estejam conectados, inclui ele na lista e continua a separação do componente 
+    [else (separa n (rest grafo) grafo-aux)])) ;Senão apenas continua a separação do componente
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                   FUNÇÕES AUXILIARES PARA AMBAS PARTES                                       ;
 ;--------------------------------------------------------------------------------------------------------------
 
-; jatem?: Numero Lista-de-Lista-de-Numeros -> Boolean
-; Recebe um Número e uma "Lista de Lista-de-Numeros" e retorna se esse valor está nessa lista
-(define (jatem? num lista)
+; ja-tem?: Numero Lista-de-Lista-de-Numeros -> Boolean
+; Verifica se o número recebido está na lista de lista de números (lista de componentes)
+(define (ja-tem? n lista)
   (cond
     [(empty? lista)#f]
-    [(= num(first(first lista)))#t]
-    [else (jatem? num (rest lista))]))
+    [(= n (first (first lista))) #t]
+    [else (ja-tem? n (rest lista))]))
 
-; Dado um número e um grafo, retorna o nodo desse número
-(define (devolveNodo number graf)
+; ja-tem?2: Numero Lista-de-numeros -> Boolean
+; Verifica se o número está na lista de números (lista do ordenamento topológico)
+(define (ja-tem?2 n lista)
   (cond
-    [(empty? graf)0]
-    [(= number(first(first graf)))(first graf)] 
-    [else (devolveNodo number (rest graf))])) 
+    [(empty? lista )#f]
+    [(= n (first lista)) #t]
+    [else (ja-tem?2 n (rest lista))]))
 
-; Recebe um numero e uma lista de numeros e retorna se esta na lista
-(define (jatem?2 num lista)
-  (cond
-    [(empty? lista)#f]
-    [(= num(first lista))#t]
-    [else (jatem?2 num (rest lista))]))
-
+; tamanho-maior-igual-que-2: Lista -> Boolean
 ; Dado uma lista verifica se tem tamanho maior que 2
-(define (tam2 lista)
+(define ( tamanho-maior-igual-que-2 lista)
   (cond
-    [(empty? lista)#f]
-    [(empty? (rest(first lista)))(tam2 (rest lista))]
+    [(empty? lista) #f]
+    [(empty? (rest (first lista))) ( tamanho-maior-igual-que-2 (rest lista))]
     [else #t]))
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                  FUNÇÕES PARA ORDEM TOPOLÓGICA                                              ;
 ;--------------------------------------------------------------------------------------------------------------
 
-; recursive: Lista-Numeros Lista-Lista-num Lista-Num Lista-Lista-num
-; Dado o nodo inicial, começará a visitar todos os outros nodos que estão conectados a ele, o "graphaux" é utilizada caso
-; o grafo seja desconexo, assim quando ele terminar de verificar todos os possíveis do conexo, vai utilizar o auxliar para visitar o resto
-(define (recursive nodo graph visitados graphaux)
+; todos-visitados?: Grafo Lista-de-numeros -> Boolean
+; Verifica se todos os nodos do grafo já foram visitados
+(define (todos-visitados? grafo visitados)
   (cond
-    [(empty? graph)empty] ; se o graph que recebeu é empty, devolve empty
-    [(tdsvisitados graph visitados)visitados] ; se já visitou todos, devolve visitados
-    ; verifica se o nodo já foi visitado, caso não visita ele E seus vizinhos
-    [(not(jatem?2 (first nodo) visitados)) (recursive nodo graph (visitavizinhos nodo graph (append visitados (list(first nodo))))graphaux)]
-    ; Se o nodo já foi visitado, vai diminuir o "graphaux" em um, e utilizar o primeiro dele como nodo
-    [else (recursive (first graphaux) graph visitados (rest graphaux))]))
+    [(empty? grafo)#true]
+    [(ja-tem?2 (first(first grafo)) visitados) (todos-visitados? (rest grafo) visitados)] ;Caso o primeiro nodo esteja na lista dos visitados, verifica os próximos
+    [else #false])) ;Se o primeiro nodo não estava, já sabe que não foram todos visitados
 
-; tdsvisitados: Lista-Lista-num Lista-num
-; Vai receber um Grafo e uma Lista-num, verifica se todos os nodos do grafo já foram visitados
-(define (tdsvisitados graph visitados)
+; aponta?: Grafo Lista-de-numeros Numero -> Boolean
+; Verifica se o nodo recebido por parâmetro aponta para outro nodo que ainda não está na lista de visitados
+(define (aponta? grafo visitados n)
   (cond
-    [(empty? graph)#true]
-    [(jatem?2 (first(first graph))visitados)(tdsvisitados (rest graph)visitados)]
-    [else #false])) 
+    [(empty? grafo) #false]
+    [(and
+      (ja-tem?2 n (rest(first grafo)))
+      (not (ja-tem?2 (first(first grafo)) visitados))) #true] ; Se o nodo está nas adjacencias do primeiro do grafo e o primeiro do grafo não está nos visitados
+    [else (aponta? (rest grafo) visitados n)])) ;Senão, continua a recursão com o resto do grafo
 
-; visitazinhos: Lista-Num Lista-Lista-Num Lista-Num
-; Recebe um Nodo, Grafo e os Visitados, se o primeiro vizinho não estiver
-; vou visitar os vizinhos dele(excluindo ele desses vizinhos) e atualizando visitados
-(define (visitavizinhos nodo graph visitados)
+; acha-proximo: Grafo Grafo Lista-de-numeros -> Lista-de-numeros
+; Acha o próximo nodo a ser incluído no ordenamento e retorna a lista de visitados com esse nodo no fim
+(define (acha-proximo grafo grafo-aux visitados)
   (cond
-    [(empty? (rest nodo))visitados]
-    [(not(jatem?2 (first(rest nodo)) visitados))(visitavizinhos (arrumavizi (first(rest nodo)) (rest nodo) (first nodo))graph (append visitados (list(first(rest nodo)))))]
-    [else (visitavizinhos (cons (first nodo)(rest(rest nodo))) graph visitados)]))
+    [(empty? grafo) empty]
+    [(and
+      (not (aponta? grafo-aux visitados (first(first grafo))))
+      (not (ja-tem?2 (first(first grafo)) visitados)))
+     (append visitados (list (first(first grafo))))] ; Se nenhum nodo aponta para ele, exceto os que já estão na lista de visitados (o ordenamento), inclui o nodo no final da lista
+    [else (acha-proximo (rest grafo) grafo-aux visitados)]))
 
-; arrumavizi: Num Lista-Num Num
-; Dado o Número a ser retirado, os Vizinhos e o Principal (1 2 3) 1 é o principal
-; Remove o Número dos vizinhos e devolve o Nodo sem ele (colocando o principal como primeiro)
-(define (arrumavizi num vizinhos principal)
+; acha-ordenamento: Grafo Lista-de-numeros -> Lista-de-numeros
+; Percorre o grafo e organiza os nodos em um ordenamento topológico
+(define (acha-ordenamento grafo visitados)
   (cond
-    [(not(jatem?2 num vizinhos))(cons principal vizinhos)]
-    [(empty? vizinhos)(cons principal vizinhos)]
-    [(empty? (rest vizinhos))(cons principal vizinhos)]
-    [(= num (first vizinhos))(cons principal (rest vizinhos))]
-    [else (arrumavizi num (append (rest vizinhos)(list(first vizinhos)))principal)]))
+    [(empty? grafo) empty]
+    [(todos-visitados? grafo visitados) visitados] ; Se já visitou todos os nodos, o ordenamento é a ordem em que eles foram visitados
+    [else (acha-ordenamento grafo (acha-proximo grafo grafo visitados))])) ; Se não, continua formando o ordenamento
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                   PRINTS DO FINAL DO TRABALHO                                               ;
 ;--------------------------------------------------------------------------------------------------------------
-
-; Função para printar caso haja Ciclos nos componentes
-(define (haciclo graf)
+; ha-ciclo: Grafo
+; Função para printar caso existam ciclos nos componentes
+(define (ha-ciclo grafo)
   (begin
-    (printf "Não há ordenamento topológico\n")
     (printf "Componentes: " )
-    (display (separa-final(separando-componentes graf graf)))
+    (display (separa-final(separando-componentes grafo grafo)))
+    (printf "\n")
+    (printf "Não há ordenamento topológico\n")
     (printf "\n")))
 
-; Função para printar caso não haja Ciclos nos componentes
-(define (naohaciclo graf)
+; nao-ha-ciclo: Grafo
+; Função para printar caso não existam nos componentes
+(define (nao-ha-ciclo grafo)
   (begin
-    (printf "Ordenamento topológico: ")
-    (display (recursive (first graf)graf (list ) graf))
-    (printf "\n")
     (printf "Componentes: ")
-    (display (separa-final(separando-componentes graf graf)))
+    (display (separa-final(separando-componentes grafo grafo)))
+    (printf "\n")
+    (printf "Ordenamento topológico: ")
+    (display (acha-ordenamento grafo (list)))
     (printf "\n")))
 
 (final g)
