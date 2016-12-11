@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname TrabalhoGrafos-LeonardoVianna-AlineWeber-GabrielStepien) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname TrabalhoGrafos-LeonardoVianna-AlineWeber-GabrielStepien-2) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ;; IMPORTANTE: para ter acesso a leitura de arquivos
 ;; é necessário configurar o DrRacket para a linguagem
 ;; "Advanced Student" 
@@ -85,8 +85,7 @@
 ; Se não, retorna os componentes e o ordenamento
 (define (final grafo)
   (cond
-    [(or( tamanho-maior-igual-que-2 (separa-final (separando-componentes grafo grafo)))
-        (laço? grafo))(ha-ciclo grafo)] ;; Se tiver um ciclo devolve os componentes separados
+    [( tamanho-maior-igual-que-2 (separa-final (separando-componentes grafo grafo))) (ha-ciclo grafo)] ;; Se tiver um ciclo devolve os componentes separados
     [else (nao-ha-ciclo grafo)]))
 
 ;--------------------------------------------------------------------------------------------------------------
@@ -148,14 +147,6 @@
     [(empty? lista) #f]
     [(empty? (rest (first lista))) ( tamanho-maior-igual-que-2 (rest lista))]
     [else #t]))
-
-; laço?: Grafo -> Boolean
-; Dado um grafo retorna se há um laço nele
-(define (laço? grafo)
-  (cond
-    [(empty? grafo)#false]
-    [(ja-tem?2(first(first grafo))(rest(first grafo)))#true]
-    [else (laço? (rest grafo))]))
 
 ;--------------------------------------------------------------------------------------------------------------
 ;                                  FUNÇÕES PARA ORDEM TOPOLÓGICA                                              ;
